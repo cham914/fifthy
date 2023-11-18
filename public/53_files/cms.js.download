@@ -1,0 +1,688 @@
+/**
+ * Nav.js
+ */
+(function(razor, undefined) {
+    'use strict';
+
+    razor.util.setActivePrimaryNav = razor.util.setActivePrimaryNav || function(title) {
+        $('.c-nav-primary .c-nav-primary__item').each(function(index, li) {
+            if ($(li).find('a').html() == title) {
+                $(li).toggleClass('is-active');
+            }
+        });
+    };
+
+    razor.util.nav = razor.util.nav || {};
+    razor.util.nav.header = razor.util.nav.header || function(title, setActive) {
+        if (title) {
+            var lowerCaseTitle = title.toLowerCase().replace(' ', '-');
+            if (setActive) {
+                razor.util.setActivePrimaryNav(title);
+            }
+        }
+    };
+
+    razor.util.nav.updateLocalNavIsActive = razor.util.nav.updateLocalNavIsActive || function(path){
+        try{
+            var localNavPath = path.split('/').slice(0,6).join('/') + '.html';
+            var localNavWithPath = $('.c-nav-local__list a[href*="'+localNavPath+'"]:not(.c-nav-local__item-level3)');
+            if(localNavWithPath && localNavWithPath.length > -1){
+                if(localNavWithPath.length === 1){
+                    if(!localNavWithPath.parent().hasClass('is-active') && !localNavWithPath.hasClass('c-nav-local__link-right')){
+                        localNavWithPath.parent().addClass('is-active');
+                    }
+                }
+            }
+        }catch(err){
+            console.error('Problem getting local nav active item');
+        }
+    };
+
+    razor.util.nav.controller = razor.util.nav.controller || function(path) {
+        razor.util.nav.updateLocalNavIsActive(path);
+        var tempPath = path.split('.')[0].split('/');
+        var $ahref = $('.c-nav-primary a[href="' + tempPath + '"]');
+        if ($ahref.length > 0) {
+            $ahref.toggleClass('is-active');
+        }
+        tempPath = tempPath.splice(0, 5);
+        var pathToFind = tempPath.join('/');
+        if (razor.util.primaryNavPathKeyMap) {
+            if (pathToFind == '/content/fifth-third/en/personal-banking') {
+                razor.util.nav.header(razor.util.primaryNavPathKeyMap.get('/content/fifth-third/en'), true);
+            } else {
+                razor.util.nav.header(razor.util.primaryNavPathKeyMap.get(pathToFind), true);
+            }
+        }
+    };
+
+    razor.util.breadcrumbs = razor.util.breadcrumbs || function() {
+        var $breadcrumbContainer = $('.breadcrumb-container');
+        if ($breadcrumbContainer.length > 0) {
+            var $breadcrumbBodyWrapper = $('.breadcrumb-body-wrapper');
+            if ($breadcrumbBodyWrapper.length > 0) {
+                $breadcrumbContainer.append($breadcrumbBodyWrapper.html());
+                $breadcrumbContainer.find('.breadcrumbs').toggleClass('hidden');
+                $breadcrumbBodyWrapper.remove();
+            }
+        }
+    };
+})(razor);
+
+(function(razor, undefined) {
+    'use strict';
+
+    var infoPaneInit = function(infoParsys) {
+        $.each(infoParsys.children(), function(i, v) {
+            var currentChild = v;
+            var isContact = $(currentChild).hasClass('contact-us');
+            var isBranch = $(currentChild).hasClass('branch-locator');
+            if (isContact || isBranch) {
+                if (i != 0) {
+                    $(currentChild).toggleClass('o-grid-cell c-footer__card--border');
+                } else {
+                    $(currentChild).toggleClass('o-grid-cell ');
+                }
+            }
+        });
+    };
+
+    var isOnPage = $('.srf-intoPaneContainer');
+    if (isOnPage && isOnPage.length > 0) {
+        infoPaneInit(isOnPage);
+    }
+
+})(razor);
+
+/**
+ * branch-locator.js
+ */
+
+(function(razor, undefined) {
+    'use strict';
+
+    razor.branchLocator = razor.branchLocator || {
+        form: $('#bal-form'),
+        baseUrl: 'https://locations.53.com/search.html?',
+        init: function() {
+            this.form.find('#branch-locator-form').on('submit', function(e) {
+            	e.preventDefault();
+                window.location.href = razor.branchLocator.execute();
+            });
+        },
+        execute: function() {
+            if (this.form.length > 0) {
+                var types = function(branchCheckbox, atmsCheckbox) {
+                    var output = '&types=';
+                    if (branchCheckbox && atmsCheckbox) {
+                        output += encodeURI('3233|3234|3235');
+                    } else if (branchCheckbox) {
+                        output += '3233';
+                    } else if (atmsCheckbox) {
+                        output += '3234|3235';
+                    }
+                    return output;
+                };
+                var q = function(searchTerm) {
+                    var output = 'q=';
+                    if (searchTerm) {
+                        output += searchTerm.trim().replace(/ /g, '');
+                    }
+                    return output;
+                };
+                var branchCheckbox = this.form.find('#branchCheckbox').is(':checked');
+                var atmsCheckbox = this.form.find('#atmsCheckbox').is(':checked');
+                var searchTerm = this.form.find('#searchInputField').val();
+                return this.baseUrl + q(searchTerm) + types(branchCheckbox, atmsCheckbox);
+            }
+        }
+    };
+
+    razor.branchLocator.init();
+
+})(razor);
+
+
+/**
+ * Get Help Form JS
+ */
+(function(razor, undefined) {
+    'use strict';
+
+    $('#btn_send_msg_ft_id').on('click', function(e) {
+        var checked = $('input[name=msg-options]:checked');
+        var path = $(checked).data('razorpath');
+        var isExt = $(checked).data('razorpathext');
+        if (path) {
+            if (path != '#') {
+                if (isExt) {
+                    e.preventDefault();
+          			$('body').addClass('c-modal--opened');
+          			$('.c-modal').removeClass('is-hidden');
+          			$('.c-modal').addClass('is-visible');
+          			$('.c-modal__speedbump').removeClass('is-hidden');
+          			$('.c-modal__speedbump').addClass('is-visible');
+          			$('.c-modal__signup').addClass('is-hidden');
+          			$('.speedbump-modal-continue-button').attr('href', path);
+          			$('#modal_ft_close_btn').attr('tabindex', -1).focus();
+          			$('#maincontent').attr('aria-hidden', true);
+                } else {
+                	if(path.startsWith("http"))
+                    {
+                    window.location =path;
+                    }
+                    else
+                    {
+                    window.location = encodeURI(window.location.origin + path + '.html');
+                    }
+                }
+            }
+        }
+    });
+
+    $('#btn_meet_with_us_ft_id').on('click', function(e) {
+        var checked = $('input[name=meetus-options]:checked');
+        var path = $(checked).data('razorpath');
+        var isExt = $(checked).data('razorpathext');
+        if (path) {
+            if (path != '#') {
+                if (isExt) {
+                    e.preventDefault();
+          			$('body').addClass('c-modal--opened');
+          			$('.c-modal').removeClass('is-hidden');
+          			$('.c-modal').addClass('is-visible');
+          			$('.c-modal__speedbump').removeClass('is-hidden');
+          			$('.c-modal__speedbump').addClass('is-visible');
+          			$('.c-modal__signup').addClass('is-hidden');
+          			$('.speedbump-modal-continue-button').attr('href', path);
+          			$('#modal_ft_close_btn').attr('tabindex', -1).focus();
+          			$('#maincontent').attr('aria-hidden', true);
+                } else {
+                    window.location =encodeURI( window.location.origin + path + '.html');
+                }
+            }
+        }
+    });
+
+    razor.getHelp = razor.getHelp || {
+        form: $('#gh-bal-form'),
+        baseUrl: 'https://locations.53.com/search.html?',
+        init: function() {
+            this.form.find('#gh-locator-form').on('submit', function(e) {
+            	e.preventDefault();
+                window.location.href = razor.getHelp.execute();
+            });
+        },
+        execute: function() {
+            if (this.form.length > 0) {
+                var types = function(branchCheckbox, atmsCheckbox) {
+                    var output = '&types=';
+                    if (branchCheckbox && atmsCheckbox) {
+                        output += encodeURI('3233|3234|3235');
+                    } else if (branchCheckbox) {
+                        output += '3233';
+                    } else if (atmsCheckbox) {
+                        output += '3234|3235';
+                    }
+                    return output;
+                };
+                var q = function(searchTerm) {
+                    var output = 'q=';
+                    if (searchTerm) {
+                        output += searchTerm.trim().replace(/ /g, '');
+                    }
+                    return output;
+                };
+                var branchCheckbox = this.form.find('#gh-branchCheckbox').is(':checked');
+                var atmsCheckbox = this.form.find('#gh-atmsCheckbox').is(':checked');
+                var searchTerm = this.form.find('#gh-searchInputField').val();
+                return this.baseUrl + q(searchTerm) + types(branchCheckbox, atmsCheckbox);
+            }
+        }
+    };
+
+    razor.getHelp.init();
+})(razor);
+
+
+/*-------------------*\
+    SELECTOR TOOL FORM selector-form.html rewrite to make dynamic from patternlab.js
+\*-------------------*/
+(function(razor, undefined) {
+    'use strict';
+
+    // Show selection wizard
+    $( ".js-show-selector-form" ).on( "click", function(e) {
+      e.preventDefault();
+      $( ".js-selector__wrapper" ).toggleClass('is-open');
+      $('html, body').animate({
+            scrollTop: $(".js-selector__wrapper").offset().top
+
+        }, 500);
+    });
+
+    //initial panel
+    var activeLiElement = $('ul').find('.selectorFormFirstQuestion');
+    activeLiElement.find('a').each(function() {
+        $(this).on('click', function(e) {
+            e.preventDefault();
+            //var active = $('.is-active');
+            var next = $('ul').find(getPanelClass(this));
+            next.addClass('is-active');
+            goToQuestion(activeLiElement, next, false);
+
+        });
+    });
+
+    var goToQuestion = function(currentQuestion, nextQuestion, startOver) {
+        nextQuestion.addClass('is-active');
+        if ($(".cssanimations").length > 0) {
+            currentQuestion.one('webkitAnimationEnd oanimationend msAnimationEnd animationend', function(e) {
+                currentQuestion.removeClass('is-active');
+            });
+
+            nextQuestion.one('webkitAnimationEnd oanimationend msAnimationEnd animationend', function(e) {
+                // code to execute after transition ends
+                nextQuestion.removeClass('c-selector__show');
+                $(".c-selector__list").removeClass('c-selector__display-next');
+            });
+        } else {
+            currentQuestion.removeClass('is-active');
+        }
+
+        nextQuestion.find('a').each(function() {
+            var currentQuestion = nextQuestion;
+            $(this).on('click', function(e) {
+                //if link, do not hide question and go to link
+                if (this.href.length == 0 && this.href !== '#') {
+                    e.preventDefault();
+                    var active = $('.is-active');
+
+                    var next = $('ul').find(getPanelClass(this));
+                    next.addClass('is-active');
+                    goToQuestion(currentQuestion, next, false);
+                }
+            });
+
+        });
+    };
+
+    var getPanelClass = function(el) {
+        return '.'+$(el).data('panelId');
+    };
+
+    var getComponentClass = function(el) {
+        return '.'+$(el).data('componentId');
+    };
+
+    //show results for product card
+    $('.js-selector__card').on('click', function(e) {
+        e.preventDefault();
+        highlightRecommendedComponent($(getComponentClass(this)));
+
+    });
+
+    var highlightRecommendedComponent = function(highlight) {
+        //copy over from patternlab.js
+        //if you change this breakpoint in the style.css file (or _layout.scss if you use SASS), don't forget to update this value as well
+        var MqL = 1024;
+        var windowsize = $(window).width();
+        if (windowsize > MqL) {
+            var selectorTool = $('.js-selector__wrapper');
+            var	elementOffset = selectorTool.offset().top;
+            // Add recommend class to entire box
+            if (highlight.length > 0){
+             highlight.find('.js-product-card').addClass('c-selector__recommended');
+            }
+
+            // Scroll to Results Section - D.Utyuzh Commenting out for now & just leaving lines 315 - 319
+            // do not need to know if this is first one or not. Unless its tied to scrolling in IE
+            // then need to reevaluate
+
+            // var firstProductCard = $(".product-service-cards").first()
+            // var firstCard = firstProductCard.find('.o-grid-cell');
+            // var firstPanelId = '.'+$(firstCard).data('panelId');
+            // if ($(firstPanelId + ' > .c-selector__recommended').length > 0) {
+            //     $('html, body').stop().animate(
+            //         {
+            //      scrollTop: highlight.offset().top - 321
+            //         }, 1000);
+            // }
+            // else {
+            //     $('html, body').stop().animate(
+            //         {
+            //            scrollTop: highlight.offset().top - 240
+            //         }, 1000);
+            // }
+            $('html, body').stop().animate(
+                {
+                   scrollTop: highlight.offset().top - $('.c-selector__wrapper.is-open').height()
+                }, 1000);
+
+            selectorTool.addClass('c-selector--fixed');
+
+            $(window).on('scroll', function() {
+                    var currentPosition = $(this).scrollTop();
+                    if(currentPosition > elementOffset) {
+                        selectorTool.addClass("c-selector--fixed");
+                        $('.c-selector-offset').css({height: '220px'});
+                    }
+                    else {
+                        selectorTool.removeClass("c-selector--fixed");
+                        $('.c-selector-offset').css({height: ''});
+                    }
+            });
+        }
+    }
+
+    $(".js-form-reset").on("click", function(e) {
+        e.preventDefault();
+
+        var active = $('.is-active');
+        var next = $(".c-selector__list li div.c-selector__item").first();
+        // Remove existing highlight
+        $('.js-product-card').removeClass('c-selector__recommended');
+        // Remove fixed position for selector tool
+        $('.js-selector__wrapper').removeClass('c-selector--fixed');
+        // Scroll back to selector tool
+        // Scroll to Results Section
+        $('html, body').animate({
+            scrollTop: $('.js-selector__wrapper').offset().top
+        }, 1000);
+        // Show next question
+        goToQuestion(active, next, true);
+    });
+
+
+})(razor);
+
+
+
+/**
+ * Lead Fusion Calculator JS
+ */
+(function(razor, undefined) {
+    'use strict';
+
+    var dynamicContent =  $('#iframeCalculator');
+    if(dynamicContent && dynamicContent.length > 0) {
+    	$(function(){
+    		// Get rest of params
+    		var valueArr = window.location.search.substring(1).split('&'), qs = '',newArr;
+    	    var calcURL = $('div#iframeCalculator').attr('data-lfurl');
+    	    var title = $('div#iframeCalculator').attr('data-title');
+
+		    // Loop through parameters adding all until complete, skipping the first.
+		    for (var i=0; i < valueArr.length; i++) {
+		    	newArr = valueArr[i].split('=');
+		    	qs += encodeURIComponent(newArr[0])+'='+encodeURIComponent(newArr[1])+'&';
+		    };
+
+	    	// Strip remaining '&' at the end and then append.
+	    	var remParams = qs.substring(0, qs.length - 1);
+
+	    	$('<iframe/>', {
+	    		src : calcURL + "?" + remParams,
+	    	    id : "lf_tool_frame",
+	    	    name : "Calculator",
+                title : title,
+                'aria-label' : title,
+	    	    scrolling: "no",
+	    	    frameborder: 0,
+	    	    class : "iframe-calc"
+	    	  }).appendTo('#iframeCalculator');
+    	});
+		var lf_iFrameID = 'lf_tool_frame';   //ID of iframe being used
+		var lf_userResize = true;
+
+		function lf_onResize(event){
+			lf_userResize = true;
+		}
+		function lf_onMessage(event) {
+		    var iFrame = document.getElementById(lf_iFrameID);
+		    if (event.source != iFrame.contentWindow) { return; }
+		    var message = JSON.parse(event.data);
+		    var desiredHeight = message.height;
+		    iFrame.height = desiredHeight;
+
+		    lf_userResize = false;
+		}
+		if (window.attachEvent) { //IE9, capability based.
+		    window.attachEvent('onmessage', lf_onMessage);
+		    window.attachEvent('onresize', lf_onResize);
+		} else if (window.addEventListener) { //Others, capability based.
+		    window.addEventListener('message', lf_onMessage, false);
+		    window.addEventListener('resize', lf_onResize, false);
+		}
+    }
+})(razor);
+
+    /**
+    * Notices and Disclosures Superscript Actions
+    */
+    (function(razor, undefined) {
+        'use strict';
+    var replaceSup = function () {
+        var superscriptItem = $('sup');
+        $.each(superscriptItem, function(i,v){isNaN($(v).text()) === false ? $(this).addClass( "footnote" ) : ''});
+        $( "sup:contains('*')").addClass('footnote');
+        $( "sup:contains('+')").addClass('footnote');
+        $( "sup:contains('†')").addClass('footnote');
+        $( "sup:contains(',')").addClass('footnote');
+    };
+    replaceSup();
+    /* Superscript Anchoring for Disclosures */
+    $('.footnote').each(function() {
+        var $this = $(this);
+        var innerChar = $this.html();
+        var notValidId = ["*", "†", "+"];
+        if(jQuery.inArray("*", notValidId) !== -1) {
+            innerChar = "s";
+            $(this).addClass('asterisk');
+            $(document).on('click', '.asterisk', function() {
+                var target = $('.c-accordion__title--disclosure');
+                $('html,body').stop().animate({
+                    scrollTop: target.offset().top - 100
+                }, 1000);
+                                                    target.focus();
+            });
+        }
+        $(this).wrapInner("<a href=#" + innerChar + ">")
+    });
+    $('.main-list .indent').each(function() {
+        var innerChar = $(this).html();
+        var thisId = $(this).attr("id");
+        if(innerChar.indexOf('*') > -1) {
+            $(this).attr("id", "s");
+        }
+    });
+
+    /* aria-label for superscript disclosures */
+    let vars = '';
+    $('.footnote').children().each((i, v) => {
+        vars += $(v).text()
+    })
+    // console.log(vars);
+
+    $('.footnote a').each(function(index, item) {
+        var ariaLabel = 'disclosure ' + item.innerHTML;
+        $(this).attr('aria-label', ariaLabel);
+
+        // console.log(i, ariaLabel)
+    });
+     
+    $(document).on('click', '.footnote a', function() {
+        var noticesAndDisclosures = $('.c-accordion__title--disclosure.js-accordion__title')
+            if(!noticesAndDisclosures.hasClass('is-active')){
+                noticesAndDisclosures.trigger('click');
+            }
+        if (location.pathname.replace(/^\//,'') == this.pathname.replace(/^\//,'') && location.hostname == this.hostname) {
+            var target = $(this.hash);
+            target = target.length ? target : $('[name=' + this.hash.slice(1) +']');
+            if (target.length) {
+                $('html,body').stop().animate({
+                    scrollTop: target.offset().top
+                }, 1000);
+            noticesAndDisclosures.focus();
+                return false;
+            }
+        }
+    });
+    })(razor);
+
+/**
+ * Home Page Info Pane Container Border Fix
+ */
+(function(razor, undefined) {
+    var infoPaneIparsys = $('.srf-intoPaneContainer .iparsys')
+    if(infoPaneIparsys && infoPaneIparsys.length > -1){
+        $('.c-footer__card--container').css('border','none');
+        var infoPaneTarget = $('.js-info-pane-target');
+        var count = 0;
+        var last = infoPaneTarget.length - 1;
+        $.each(infoPaneTarget,function(i,v){
+            if(count != 0 ){
+                $(v).addClass('c-footer__card--border');
+            } count++;
+        });
+    }
+})(razor);
+
+
+/*-------------------*\
+Request A Call Modal
+\*-------------------*/
+function callModal() {
+	$('body').on('click', '.call_modal', function(e) {
+		var mobileNav = $('.c-nav-mobile');
+		if(mobileNav && mobileNav.length > 0 && mobileNav.hasClass('nav-is-visible')){
+			$('.js-nav-trigger').trigger('click');
+		}
+
+		e.preventDefault();
+		$('body').addClass('c-modal--opened');
+		$('.c-modal').removeClass('is-hidden');
+		$('.c-modal').addClass('is-visible');
+		$('.c-modal__call').removeClass('is-hidden');
+		$('.c-modal__call').addClass('is-visible');
+		$('.c-modal__signup').addClass('is-hidden');
+		$('.c-modal__speedbump').addClass('is-hidden');
+		});
+	}
+callModal();
+
+/**
+ * E-Coupon
+ */
+const eCouponForm       = $( 'form.e-coupon-form' );
+const referer           = document.referrer;
+
+if(eCouponForm) {
+    eCouponForm.each(function() {
+        var currentForm = $(this);
+        let eCouponSuccess  = currentForm.parent().find( '.success' );
+        let eCouponError    = currentForm.find( '.error' );
+        let eCouponInput    = currentForm.find( '.email-input' );
+        let eCouponSubmit   = currentForm.find( '.submit' );
+
+        currentForm.on( 'submit', eCouponSubmit, function( e ) {
+            e.preventDefault();
+
+            eCouponSubmit.attr( 'disabled', 'disabled' );
+
+            let ajaxPackage  = currentForm.serializeArray();
+
+            getUrlParameter( 'cid' ) ?  ajaxPackage.push( { name: "cid", value: getUrlParameter( 'cid' ) } ) : "";
+            getUrlParameter( 'omid' ) ?  ajaxPackage.push( { name: "omid", value: getUrlParameter( 'omid' ) } ) : "";
+            getUrlParameter( 'mkwid' ) ?  ajaxPackage.push( { name: "mkwid", value: getUrlParameter( 'mkwid' ) } ) : "";
+            getUrlParameter( 'gclid' ) ?  ajaxPackage.push( { name: "gclid", value: getUrlParameter( 'gclid' ) } ) : "";
+
+            if ( validateEmail( eCouponInput.val() ) && eCouponInput.val() != "" ) {
+
+                var xhr = new XMLHttpRequest();
+                // On XHR state change and 200, parse the json to get the token
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        var msg = JSON.parse(xhr.responseText);
+                        // Send the request to our POST Servlet
+                        $.post( {
+                            method: "POST",
+                            url: "/bin/fifth-third/ecoupon",
+                            headers: {'CSRF-Token' : msg.token},
+                            data: $.param( ajaxPackage )
+                        } ).done( function () {
+                            currentForm.hide();
+                            eCouponSuccess.show();
+                        } );
+                    }
+                };
+                // Open the request to the token endpoint and send the GET
+                xhr.open("GET", "/libs/granite/csrf/token.json", true);
+                xhr.send();
+
+
+
+            } else {
+                eCouponError.show();
+                eCouponSubmit.removeAttr( 'disabled' );
+            }
+        } );
+
+    });
+}
+
+// if( eCouponForm ) {
+//     let eCopponSuccess  = $( '.e-coupon-container' ).find( '.success' );
+//     let eCouponError    = eCouponForm.find( '.error' );
+//     let eCouponInput    = eCouponForm.find( '.emailAddress-input' );
+//     let eCouponSubmit   = eCouponForm.find( '.submit' );
+//
+//     eCouponForm.on( 'submit', eCouponSubmit, function( e ) {
+//         e.preventDefault();
+//
+//         eCouponSubmit.attr( 'disabled', 'disabled' );
+//
+//         let ajaxPackage  = eCouponForm.serializeArray();
+//
+//         getUrlParameter( 'cid' ) ?  ajaxPackage.push( { name: "cid", value: getUrlParameter( 'cid' ) } ) : "";
+//         getUrlParameter( 'omid' ) ?  ajaxPackage.push( { name: "omid", value: getUrlParameter( 'omid' ) } ) : "";
+//         getUrlParameter( 'mkwid' ) ?  ajaxPackage.push( { name: "mkwid", value: getUrlParameter( 'mkwid' ) } ) : "";
+//         getUrlParameter( 'gclid' ) ?  ajaxPackage.push( { name: "gclid", value: getUrlParameter( 'gclid' ) } ) : "";
+//
+//         if ( validateEmail( eCouponInput.val() ) && eCouponInput.val() != "" ) {
+//             $.ajax( {
+//                 method: "GET",
+//                 url: "/bin/fifth-third/ecoupon",
+//                 data: $.param( ajaxPackage )
+//             } ).done( function () {
+//                 eCouponForm.hide();
+//                 eCopponSuccess.show();
+//             } );
+//         } else {
+//             eCouponError.show();
+//             eCouponSubmit.removeAttr( 'disabled' );
+//         }
+//     } );
+// }
+function getUrlParameter(sParam) {
+    var sPageURL = window.location.search.substring(1),
+        sURLVariables = sPageURL.split('&'),
+        sParameterName,
+        i;
+
+    for (i = 0; i < sURLVariables.length; i++) {
+        sParameterName = sURLVariables[i].split('=');
+
+        if (sParameterName[0] === sParam) {
+            return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
+        }
+    }
+}
+function validateEmail( email ) {
+    let regex = /^([a-zA-Z0-9_\.\-\+])+(?!\@53\.com)((\@([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4}))+$/;
+
+    if( regex.test( email ) ) {
+        return true;
+    }
+    return false;
+}

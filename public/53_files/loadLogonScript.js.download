@@ -1,0 +1,47 @@
+var loadLogonScript = (function(currentHostname)
+{
+	
+	var loaded = false;
+	
+	var hostMap = {
+		"www-dev.cb.info53.com" : "onlinebanking-dev.cb.info53.com",
+		"www-stg.cb.info53.com" : "onlinebanking-stg.cb.info53.com",
+		"www-qa.cb.info53.com"  : "onlinebanking-qa.cb.info53.com",
+		"www-qa2.cb.info53.com"  : "onlinebanking-qa2.cb.info53.com",
+		"www.53.com"			: "onlinebanking.53.com", 
+		"53.com"				: "onlinebanking.53.com"
+	};
+	
+	function loadAndExecuteCachedScript(url)
+	{
+        return jQuery.ajax({ 
+			dataType: "script",
+            cache: true,
+            url: url
+ 		});
+    };
+	
+	return function loadLogonScript(remoteLogonScriptAbsPath)
+	{
+		
+		if (!loaded)
+		{
+			
+			var obHostname = hostMap[currentHostname] || "";
+			var obOrigin = obHostname ? ("https://" + obHostname) : "";
+			
+			loaded = !!remoteLogonScriptAbsPath && !!obOrigin;
+			
+			if (loaded)
+			{
+				var remoteLogonScriptUrl = obOrigin + remoteLogonScriptAbsPath;
+				loadAndExecuteCachedScript(remoteLogonScriptUrl);
+			}
+			
+		}
+				
+		return loaded;
+		
+	};
+	
+})(location.hostname);

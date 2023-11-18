@@ -1,0 +1,19 @@
+var items = document.getElementsByTagName("scripttomove");
+var toAdd = '';
+for (var i=0; i<items.length; i++){
+    var item = items[i].innerHTML;
+    var scriptType = '';
+    if (item.match("<scripttype>")){
+        var beginingIndex = item.indexOf("<scripttype>") + 12;
+        var endIndex = item.indexOf("</scripttype>");
+        var scriptStart = endIndex + 13;
+        scriptType = item.substring(beginingIndex, endIndex);
+        item = item.slice(scriptStart);
+    }
+    item = item.replace(/\&gt\;/g, '>');
+    item = item.replace(/\&lt\;/g, '<');
+    item = item.replace(/\&amp\;/g, '&');
+    item = "<"+"s"+"c"+"r"+"i"+"p"+"t" + scriptType + ">" + item + "</"+"s"+"c"+"r"+"i"+"p"+"t>";
+    toAdd += item;
+}
+$("#html-js-home").append(toAdd);
